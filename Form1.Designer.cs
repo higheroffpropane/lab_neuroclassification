@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             textBox1 = new TextBox();
             button1 = new Button();
             buttonClear = new Button();
@@ -40,6 +41,7 @@
             label1 = new Label();
             pictureBox2 = new PictureBox();
             label2 = new Label();
+            checkedListBox1 = new CheckedListBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBar1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -84,6 +86,8 @@
             // 
             // pictureBox1
             // 
+            pictureBox1.BackgroundImage = (Image)resources.GetObject("pictureBox1.BackgroundImage");
+            pictureBox1.BorderStyle = BorderStyle.FixedSingle;
             pictureBox1.Location = new Point(56, 85);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(196, 189);
@@ -132,6 +136,8 @@
             // 
             // pictureBox2
             // 
+            pictureBox2.BackgroundImage = (Image)resources.GetObject("pictureBox2.BackgroundImage");
+            pictureBox2.BorderStyle = BorderStyle.FixedSingle;
             pictureBox2.Location = new Point(500, 85);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(196, 189);
@@ -147,11 +153,21 @@
             label2.TabIndex = 11;
             label2.Text = "График";
             // 
+            // checkedListBox1
+            // 
+            checkedListBox1.FormattingEnabled = true;
+            checkedListBox1.Items.AddRange(new object[] { "Accuracy", "Precision", "Recall", "значение Loss функции" });
+            checkedListBox1.Location = new Point(500, 300);
+            checkedListBox1.Name = "checkedListBox1";
+            checkedListBox1.Size = new Size(196, 94);
+            checkedListBox1.TabIndex = 12;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(checkedListBox1);
             Controls.Add(label2);
             Controls.Add(pictureBox2);
             Controls.Add(label1);
@@ -188,5 +204,6 @@
         private Label label1;
         private PictureBox pictureBox2;
         private Label label2;
+        private CheckedListBox checkedListBox1;
     }
 }

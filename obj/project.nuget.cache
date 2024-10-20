@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "Z1lUxSkbM83kp4n9aEUUuqkP2r9LZJGhsUrd7V8GX49mo70UhZdHeI/PR37MeLvzIWXfShUHHpgpiWwGMUbB4Q==",
+  "dgSpecHash": "DEjyMdQYDNyKEc20rvOFoXwCRjDwBxNybxxEo1C1Yf7u0E62MwFDhlm3IK3QQ6llfJuWet92XveReANAX4A4kw==",
   "success": true,
   "projectFilePath": "C:\\Users\\higheroffpropane\\Desktop\\4 КУРС\\1 СЕМЕСТР\\Основы машинного обучения\\лр2\\lab2\\lab2.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\higheroffpropane\\.nuget\\packages\\mathnet.numerics\\5.0.0\\mathnet.numerics.5.0.0.nupkg.sha512"
+  ],
   "logs": []
 }
