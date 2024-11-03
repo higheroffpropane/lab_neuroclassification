@@ -28,20 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             textBox1 = new TextBox();
-            button1 = new Button();
+            buttonIdentify = new Button();
             buttonClear = new Button();
             buttonPunish = new Button();
             pictureBox1 = new PictureBox();
-            textBox2 = new TextBox();
-            textBox3 = new TextBox();
+            textBoxEpochs = new TextBox();
+            textBoxDelta = new TextBox();
             buttonLearn = new Button();
             trackBar1 = new TrackBar();
             label1 = new Label();
             pictureBox2 = new PictureBox();
             label2 = new Label();
             checkedListBox1 = new CheckedListBox();
+            buttonChoose = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBar1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -54,15 +54,15 @@
             textBox1.Size = new Size(196, 23);
             textBox1.TabIndex = 0;
             // 
-            // button1
+            // buttonIdentify
             // 
-            button1.Location = new Point(56, 342);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 1;
-            button1.Text = "расп.";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            buttonIdentify.Location = new Point(56, 342);
+            buttonIdentify.Name = "buttonIdentify";
+            buttonIdentify.Size = new Size(75, 23);
+            buttonIdentify.TabIndex = 1;
+            buttonIdentify.Text = "расп.";
+            buttonIdentify.UseVisualStyleBackColor = true;
+            buttonIdentify.Click += buttonIdentify_Click;
             // 
             // buttonClear
             // 
@@ -86,27 +86,29 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.BackgroundImage = (Image)resources.GetObject("pictureBox1.BackgroundImage");
             pictureBox1.BorderStyle = BorderStyle.FixedSingle;
             pictureBox1.Location = new Point(56, 85);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(196, 189);
+            pictureBox1.Size = new Size(196, 196);
             pictureBox1.TabIndex = 4;
             pictureBox1.TabStop = false;
+            pictureBox1.MouseDown += pictureBox1_MouseDown;
+            pictureBox1.MouseMove += pictureBox1_MouseMove;
+            pictureBox1.MouseUp += pictureBox1_MouseUp;
             // 
-            // textBox2
+            // textBoxEpochs
             // 
-            textBox2.Location = new Point(285, 12);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new Size(65, 23);
-            textBox2.TabIndex = 5;
+            textBoxEpochs.Location = new Point(285, 12);
+            textBoxEpochs.Name = "textBoxEpochs";
+            textBoxEpochs.Size = new Size(65, 23);
+            textBoxEpochs.TabIndex = 5;
             // 
-            // textBox3
+            // textBoxDelta
             // 
-            textBox3.Location = new Point(375, 12);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new Size(65, 23);
-            textBox3.TabIndex = 6;
+            textBoxDelta.Location = new Point(375, 12);
+            textBoxDelta.Name = "textBoxDelta";
+            textBoxDelta.Size = new Size(65, 23);
+            textBoxDelta.TabIndex = 6;
             // 
             // buttonLearn
             // 
@@ -136,7 +138,6 @@
             // 
             // pictureBox2
             // 
-            pictureBox2.BackgroundImage = (Image)resources.GetObject("pictureBox2.BackgroundImage");
             pictureBox2.BorderStyle = BorderStyle.FixedSingle;
             pictureBox2.Location = new Point(500, 85);
             pictureBox2.Name = "pictureBox2";
@@ -162,23 +163,34 @@
             checkedListBox1.Size = new Size(196, 94);
             checkedListBox1.TabIndex = 12;
             // 
+            // buttonChoose
+            // 
+            buttonChoose.Location = new Point(258, 304);
+            buttonChoose.Name = "buttonChoose";
+            buttonChoose.Size = new Size(75, 23);
+            buttonChoose.TabIndex = 13;
+            buttonChoose.Text = "выбрать";
+            buttonChoose.UseVisualStyleBackColor = true;
+            buttonChoose.Click += buttonChoose_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(buttonChoose);
             Controls.Add(checkedListBox1);
             Controls.Add(label2);
             Controls.Add(pictureBox2);
             Controls.Add(label1);
             Controls.Add(trackBar1);
             Controls.Add(buttonLearn);
-            Controls.Add(textBox3);
-            Controls.Add(textBox2);
+            Controls.Add(textBoxDelta);
+            Controls.Add(textBoxEpochs);
             Controls.Add(pictureBox1);
             Controls.Add(buttonPunish);
             Controls.Add(buttonClear);
-            Controls.Add(button1);
+            Controls.Add(buttonIdentify);
             Controls.Add(textBox1);
             Name = "Form1";
             Text = "Form1";
@@ -193,17 +205,18 @@
         #endregion
 
         private TextBox textBox1;
-        private Button button1;
+        private Button buttonIdentify;
         private Button buttonClear;
         private Button buttonPunish;
         private PictureBox pictureBox1;
-        private TextBox textBox2;
-        private TextBox textBox3;
+        private TextBox textBoxEpochs;
+        private TextBox textBoxDelta;
         private Button buttonLearn;
         private TrackBar trackBar1;
         private Label label1;
         private PictureBox pictureBox2;
         private Label label2;
         private CheckedListBox checkedListBox1;
+        private Button buttonChoose;
     }
 }

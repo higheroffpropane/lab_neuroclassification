@@ -6,6 +6,7 @@ C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы ма�
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\bin\Debug\net6.0-windows\MathNet.Numerics.dll
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.csproj.AssemblyReference.cache
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.Form1.resources
+C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.Properties.Resources.resources
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.csproj.GenerateResource.cache
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.AssemblyInfoInputs.cache
@@ -17,4 +18,3 @@ C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы ма�
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.pdb
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.genruntimeconfig.cache
 C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\ref\lab2.dll
-C:\Users\higheroffpropane\Desktop\4 КУРС\1 СЕМЕСТР\Основы машинного обучения\лр2\lab2\obj\Debug\net6.0-windows\lab2.Properties.Resources.resources

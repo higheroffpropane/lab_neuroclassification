@@ -3,168 +3,407 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MathNet.Numerics.LinearAlgebra;
 
 namespace lab2
 {
+    using System;
+
     public class NeuralNetwork
     {
-        private int inputSize, hiddenSize1, hiddenSize2, outputSize;
-        private Matrix<double> weightsInputToHidden1, weightsHidden1ToHidden2, weightsHidden2ToOutput;
-        private Vector<double> biasHidden1, biasHidden2, biasOutput;
+        private double learningRate;
+        private Layer[] layers;
 
-        public NeuralNetwork(int inputSize, int hiddenSize1, int hiddenSize2, int outputSize)
+        public NeuralNetwork(double learningRate, params int[] sizes)
         {
-            this.inputSize = inputSize;
-            this.hiddenSize1 = hiddenSize1;
-            this.hiddenSize2 = hiddenSize2;
-            this.outputSize = outputSize;
+            this.learningRate = learningRate;
+            layers = new Layer[sizes.Length];
 
-            // Инициализация весов и смещений случайными значениями
-            weightsInputToHidden1 = Matrix<double>.Build.Random(hiddenSize1, inputSize);
-            weightsHidden1ToHidden2 = Matrix<double>.Build.Random(hiddenSize2, hiddenSize1);
-            weightsHidden2ToOutput = Matrix<double>.Build.Random(outputSize, hiddenSize2);
-            biasHidden1 = Vector<double>.Build.Random(hiddenSize1);
-            biasHidden2 = Vector<double>.Build.Random(hiddenSize2);
-            biasOutput = Vector<double>.Build.Random(outputSize);
+            for (int i = 0; i < sizes.Length; i++)
+            {
+                int nextSize = i < sizes.Length - 1 ? sizes[i + 1] : 0;
+                layers[i] = new Layer(sizes[i], nextSize);
+
+                for (int j = 0; j < sizes[i]; j++)
+                {
+                    layers[i].Biases[j] = new Random().NextDouble() * 2.0 - 1.0;
+                    for (int k = 0; k < nextSize; k++)
+                    {
+                        layers[i].Weights[j][k] = new Random().NextDouble() * 2.0 - 1.0;
+                    }
+                }
+            }
         }
 
-        // Функция активации (сигмоида)
-        private double Sigmoid(double x) => 1.0 / (1.0 + Math.Exp(-x));
+        // Sigmoid активационная функция
+        private static double Sigmoid(double x)
+        {
+            return 1.0 / (1.0 + Math.Exp(-x));
+        }
 
         // Производная сигмоиды
-        private double SigmoidDerivative(double x) => Sigmoid(x) * (1 - Sigmoid(x));
-
-        // Прямое распространение
-        public Vector<double> FeedForward(Vector<double> input)
+        private static double DSigmoid(double y)
         {
-            var hiddenLayer1 = (weightsInputToHidden1 * input + biasHidden1).Map(Sigmoid);
-            var hiddenLayer2 = (weightsHidden1ToHidden2 * hiddenLayer1 + biasHidden2).Map(Sigmoid);
-            var outputLayer = (weightsHidden2ToOutput * hiddenLayer2 + biasOutput).Map(Sigmoid);
-            return outputLayer;
+            return y * (1.0 - y);
+        }
+        
+        // Softmax
+        private static double[] Softmax(double[] outputs)
+        {
+            double max = outputs.Max();
+            double sum = 0;
+
+            for (int i = 0; i < outputs.Length; i++)
+            {
+                outputs[i] = Math.Exp(outputs[i] - max); // Для числовой стабильности
+                sum += outputs[i];
+            }
+
+            for (int i = 0; i < outputs.Length; i++)
+            {
+                outputs[i] /= sum;
+            }
+
+            return outputs;
         }
 
-        // Обратное распространение ошибки (обучение)
-        public void Backpropagate(Vector<double> input, Vector<double> target, double learningRate)
+        public double[] FeedForward(double[] inputs)
         {
-            // Прямое распространение
-            var hiddenLayer1 = (weightsInputToHidden1 * input + biasHidden1).Map(Sigmoid);
-            var hiddenLayer2 = (weightsHidden1ToHidden2 * hiddenLayer1 + biasHidden2).Map(Sigmoid);
-            var outputLayer = (weightsHidden2ToOutput * hiddenLayer2 + biasOutput).Map(Sigmoid);
+            Array.Copy(inputs, layers[0].Neurons, inputs.Length);
 
-            // Вычисление ошибки на выходе
-            var outputError = target - outputLayer;
-            var outputDelta = outputError.PointwiseMultiply(outputLayer.Map(SigmoidDerivative));
+            for (int i = 1; i < layers.Length; i++)
+            {
+                Layer l = layers[i - 1];
+                Layer l1 = layers[i];
 
-            // Ошибка на втором скрытом слое
-            var hidden2Error = weightsHidden2ToOutput.TransposeThisAndMultiply(outputDelta);
-            var hidden2Delta = hidden2Error.PointwiseMultiply(hiddenLayer2.Map(SigmoidDerivative));
+                for (int j = 0; j < l1.Size; j++)
+                {
+                    l1.Neurons[j] = 0;
 
-            // Ошибка на первом скрытом слое
-            var hidden1Error = weightsHidden1ToHidden2.TransposeThisAndMultiply(hidden2Delta);
-            var hidden1Delta = hidden1Error.PointwiseMultiply(hiddenLayer1.Map(SigmoidDerivative));
+                    for (int k = 0; k < l.Size; k++)
+                    {
+                        l1.Neurons[j] += l.Neurons[k] * l.Weights[k][j];
+                    }
 
-            // Обновление весов
-            weightsHidden2ToOutput += learningRate * outputDelta.OuterProduct(hiddenLayer2);
-            weightsHidden1ToHidden2 += learningRate * hidden2Delta.OuterProduct(hiddenLayer1);
-            weightsInputToHidden1 += learningRate * hidden1Delta.OuterProduct(input);
+                    l1.Neurons[j] += l1.Biases[j];
 
-            // Обновление смещений
-            biasOutput += learningRate * outputDelta;
-            biasHidden2 += learningRate * hidden2Delta;
-            biasHidden1 += learningRate * hidden1Delta;
+                    // Используем сигмоид на всех слоях, кроме последнего
+                    l1.Neurons[j] = Sigmoid(l1.Neurons[j]);
+                }
+            }
+
+            // Применяем softmax на выходном слое для получения вероятностей классов
+            return Softmax(layers[^1].Neurons);
         }
+
+        public void Backpropagation(double[] targets)
+        {
+            // Массив для хранения ошибок выходного слоя
+            double[] errors = new double[layers[^1].Size];
+
+            // Вычисление ошибок для выходного слоя
+            for (int i = 0; i < layers[^1].Size; i++)
+            {
+                errors[i] = targets[i] - layers[^1].Neurons[i];
+            }
+
+            // Обратное распространение ошибки по слоям
+            for (int k = layers.Length - 2; k >= 0; k--)
+            {
+                Layer l = layers[k];
+                Layer l1 = layers[k + 1];
+
+                double[] errorsNext = new double[l.Size];
+                double[] gradients = new double[l1.Size];
+
+                // Вычисление градиентов для текущего слоя
+                for (int i = 0; i < l1.Size; i++)
+                {
+                    gradients[i] = errors[i] * DSigmoid(l1.Neurons[i]);
+                    gradients[i] *= learningRate; // Умножаем на скорость обучения
+                }
+
+                // Инициализация массива делт
+                double[][] deltas = new double[l1.Size][];
+                for (int i = 0; i < l1.Size; i++)
+                {
+                    deltas[i] = new double[l.Size];
+                    for (int j = 0; j < l.Size; j++)
+                    {
+                        deltas[i][j] = gradients[i] * l.Neurons[j];
+                    }
+                }
+
+                // Вычисление ошибок для предыдущего слоя
+                for (int i = 0; i < l.Size; i++)
+                {
+                    errorsNext[i] = 0;
+                    for (int j = 0; j < l1.Size; j++)
+                    {
+                        errorsNext[i] += l.Weights[i][j] * errors[j]; // Умножаем веса на ошибки
+                    }
+                }
+
+                // Копируем ошибки для следующей итерации
+                errors = new double[l.Size];
+                Array.Copy(errorsNext, errors, l.Size);
+
+                // Обновление весов
+                double[][] weightsNew = new double[l.Size][];
+                for (int i = 0; i < l.Size; i++)
+                {
+                    weightsNew[i] = new double[l1.Size];
+                    for (int j = 0; j < l1.Size; j++)
+                    {
+                        // Обновляем веса
+                        weightsNew[i][j] = l.Weights[i][j] + deltas[j][i];
+                    }
+                }
+                l.Weights = weightsNew;
+
+                // Обновление смещений
+                for (int i = 0; i < l1.Size; i++)
+                {
+                    l1.Biases[i] += gradients[i];
+                }
+            }
+        }
+
+
+        public void Train(int epochs, int[,] data, double validationSplit = 0.2)
+        {
+            int samples = data.GetLength(0);
+            int validationSize = (int)(samples * validationSplit);
+            int trainSize = samples - validationSize;
+
+            // Разделяем данные на обучающую и валидационную выборки
+            int[,] trainData = new int[trainSize, data.GetLength(1)];
+            int[,] validationData = new int[validationSize, data.GetLength(1)];
+            Array.Copy(data, 0, trainData, 0, trainSize * data.GetLength(1));
+            Array.Copy(data, trainSize * data.GetLength(1), validationData, 0, validationSize * data.GetLength(1));
+
+            // Открываем файл для записи метрик
+            using (StreamWriter writer = new StreamWriter("metrics.txt"))
+            {
+                for (int epoch = 1; epoch <= epochs; epoch++)
+                {
+                    int correctCount = 0;
+                    double totalError = 0;
+
+                    // Обучение на обучающей выборке
+                    for (int imgIndex = 0; imgIndex < trainSize; imgIndex++)
+                    {
+                        double[] inputs = new double[1024];
+                        for (int k = 0; k < 1024; k++)
+                        {
+                            inputs[k] = trainData[imgIndex, k + 2];
+                        }
+
+                        double[] targets = new double[10];
+                        int actualClass = trainData[imgIndex, 1];
+                        targets[actualClass - 1] = 1;
+
+                        double[] outputs = FeedForward(inputs);
+
+                        int predictedClass = 0;
+                        double maxOutput = outputs[0];
+                        for (int k = 1; k < outputs.Length; k++)
+                        {
+                            if (outputs[k] > maxOutput)
+                            {
+                                maxOutput = outputs[k];
+                                predictedClass = k;
+                            }
+                        }
+
+                        if (predictedClass == actualClass - 1)
+                        {
+                            correctCount++;
+                        }
+
+                        for (int k = 0; k < 10; k++)
+                        {
+                            double error = targets[k] - outputs[k];
+                            totalError += error * error;
+                        }
+
+                        Backpropagation(targets);
+                    }
+
+                    // Проверка на валидационной выборке
+                    double valAccuracy = 0, valPrecision = 0, valRecall = 0, valLoss = 0;
+                    for (int imgIndex = 0; imgIndex < validationSize; imgIndex++)
+                    {
+                        double[] inputs = new double[1024];
+                        for (int k = 0; k < 1024; k++)
+                        {
+                            inputs[k] = validationData[imgIndex, k + 2];
+                        }
+
+                        double[] targets = new double[10];
+                        int actualClass = validationData[imgIndex, 1];
+                        targets[actualClass - 1] = 1;
+
+                        double[] outputs = FeedForward(inputs);
+
+                        // Метрика Accuracy
+                        int predictedClass = Array.IndexOf(outputs, outputs.Max());
+                        if (predictedClass == actualClass - 1)
+                        {
+                            valAccuracy++;
+                        }
+
+                        // Метрика Loss
+                        for (int k = 0; k < 10; k++)
+                        {
+                            double error = targets[k] - outputs[k];
+                            valLoss += error * error;
+                        }
+
+                        // Метрики Precision и Recall (рассчитываются только для бинарных меток)
+                        valPrecision += CalculatePrecision(targets, outputs);
+                        valRecall += CalculateRecall(targets, outputs);
+                    }
+
+                    // Нормализация метрик
+                    valAccuracy /= validationSize;
+                    valLoss /= validationSize;
+                    valPrecision /= validationSize;
+                    valRecall /= validationSize;
+
+                    // Запись метрик в файл
+                    writer.WriteLine($"{valAccuracy} {valPrecision} {valRecall} {valLoss}");
+
+                    Console.WriteLine($"Epoch {epoch}: Accuracy={valAccuracy}, Precision={valPrecision}, Recall={valRecall}, Loss={valLoss}");
+                }
+            }
+        }
+
+        // Функции для вычисления Precision и Recall
+        private double CalculatePrecision(double[] targets, double[] outputs)
+        {
+            int truePositives = 0, predictedPositives = 0;
+
+            for (int i = 0; i < targets.Length; i++)
+            {
+                if (outputs[i] >= 0.5) predictedPositives++;
+                if (targets[i] == 1 && outputs[i] >= 0.5) truePositives++;
+            }
+
+            return predictedPositives == 0 ? 0 : (double)truePositives / predictedPositives;
+        }
+
+        private double CalculateRecall(double[] targets, double[] outputs)
+        {
+            int truePositives = 0, actualPositives = 0;
+
+            for (int i = 0; i < targets.Length; i++)
+            {
+                if (targets[i] == 1) actualPositives++;
+                if (targets[i] == 1 && outputs[i] >= 0.5) truePositives++;
+            }
+
+            return actualPositives == 0 ? 0 : (double)truePositives / actualPositives;
+        }
+
+        public int Predict(double[] inputs)
+        {
+            // Прогоняем входные данные через сеть
+            double[] outputs = FeedForward(inputs);
+
+            // Находим индекс с максимальным значением (это и будет предполагаемый класс)
+            int predictedClass = 0;
+            double maxOutput = outputs[0];
+            for (int i = 1; i < outputs.Length; i++)
+            {
+                if (outputs[i] > maxOutput)
+                {
+                    maxOutput = outputs[i];
+                    predictedClass = i;
+                }
+            }
+
+            return predictedClass + 1; // Возвращаем класс (индексация с 1 до 10)
+        }
+
 
         public void SaveWeights(string filePath)
         {
-            using (StreamWriter writer = new StreamWriter(filePath))
+            using (StreamWriter sw = new StreamWriter(filePath))
             {
-                writer.WriteLine(weightsInputToHidden1.ToMatrixString());
-                writer.WriteLine(weightsHidden1ToHidden2.ToMatrixString());
-                writer.WriteLine(weightsHidden2ToOutput.ToMatrixString());
-            }
-        }
-
-        private Matrix<double> LoadWeights(StreamReader reader, int rows, int columns)
-        {
-            Matrix<double> weights = Matrix<double>.Build.Dense(rows, columns);
-            for (int i = 0; i < rows; i++)
-            {
-                string[] lineData = reader.ReadLine().Split(',');
-                for (int j = 0; j < columns; j++)
+                for (int k = 0; k < layers.Length - 1; k++)
                 {
-                    weights[i, j] = double.Parse(lineData[j]);
+                    Layer layer = layers[k];
+                    for (int i = 0; i < layer.Weights.Length; i++)
+                    {
+                        sw.WriteLine(string.Join(";", layer.Weights[i]));
+                    }
+                    sw.WriteLine(); // Пустая строка между слоями
                 }
             }
-            return weights;
         }
 
 
         public void LoadWeights(string filePath)
         {
-            using (StreamReader reader = new StreamReader(filePath))
+            using (StreamReader sr = new StreamReader(filePath))
             {
-                weightsInputToHidden1 = LoadWeights(reader, inputSize, hiddenSize1);
-                weightsHidden1ToHidden2 = LoadWeights(reader, hiddenSize1, hiddenSize2);
-                weightsHidden2ToOutput = LoadWeights(reader, hiddenSize2, outputSize);
+                for (int k = 0; k < layers.Length - 1; k++)
+                {
+                    Layer layer = layers[k];
+
+                    // Для каждого слоя читаем веса
+                    for (int i = 0; i < layer.Weights.Length; i++)
+                    {
+                        string line = sr.ReadLine();
+                        if (line == null)
+                        {
+                            throw new Exception($"Not enough weight data for layer {k}. Expected weights for neuron {i}.");
+                        }
+
+                        string[] weights = line.Split(';');
+
+                        // Проверяем, что длина массива weights соответствует ожидаемой длине
+                        if (weights.Length != layer.Weights[i].Length)
+                        {
+                            throw new Exception($"Mismatch in weight count for layer {k}, neuron {i}: expected {layer.Weights[i].Length}, got {weights.Length}.");
+                        }
+
+                        for (int j = 0; j < weights.Length; j++)
+                        {
+                            layer.Weights[i][j] = double.Parse(weights[j]);
+                        }
+                    }
+
+                    // Пропустить пустую строку между слоями, если она есть
+                    if (sr.Peek() != -1)
+                    {
+                        sr.ReadLine(); // Пропускаем пустую строку
+                    }
+                }
             }
         }
+
+
 
     }
 
-    public class NeuralNetworkTrainer
+    public class Layer
     {
-        private NeuralNetwork network;
-        private double learningRate;
-        private int epochs;
+        public int Size { get; }
+        public double[] Neurons { get; set; }
+        public double[] Biases { get; set; }
+        public double[][] Weights { get; set; }
 
-        public NeuralNetworkTrainer(NeuralNetwork network, double learningRate, int epochs)
+        public Layer(int size, int nextSize)
         {
-            this.network = network;
-            this.learningRate = learningRate;
-            this.epochs = epochs;
-        }
-
-        public void Train(List<Vector<double>> trainingData, List<Vector<double>> trainingLabels,
-                          List<Vector<double>> validationData, List<Vector<double>> validationLabels)
-        {
-            for (int epoch = 0; epoch < epochs; epoch++)
+            Size = size;
+            Neurons = new double[size];
+            Biases = new double[size];
+            Weights = new double[size][];
+            for (int i = 0; i < size; i++)
             {
-                double totalLoss = 0;
-                int correctPredictions = 0;
-
-                // Обучение на тренировочной выборке
-                for (int i = 0; i < trainingData.Count; i++)
-                {
-                    var output = network.FeedForward(trainingData[i]);
-                    network.Backpropagate(trainingData[i], trainingLabels[i], learningRate);
-
-                    // Вычисление ошибки (кросс-энтропия)
-                    totalLoss += CrossEntropyLoss(output, trainingLabels[i]);
-                    if (GetPrediction(output) == GetPrediction(trainingLabels[i]))
-                    {
-                        correctPredictions++;
-                    }
-                }
-
-                double accuracy = (double)correctPredictions / trainingData.Count;
-                Console.WriteLine($"Эпоха {epoch + 1}/{epochs} - Loss: {totalLoss}, Accuracy: {accuracy}");
+                Weights[i] = new double[nextSize];
             }
-        }
-
-        private double CrossEntropyLoss(Vector<double> output, Vector<double> target)
-        {
-            double loss = 0;
-            for (int i = 0; i < output.Count; i++)
-            {
-                loss -= target[i] * Math.Log(output[i]);
-            }
-            return loss;
-        }
-
-        private int GetPrediction(Vector<double> output)
-        {
-            return output.MaximumIndex();
         }
     }
 
