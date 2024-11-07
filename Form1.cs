@@ -4,13 +4,6 @@ using System;
 
 namespace lab2
 {
-    // что нужно сделать:
-    // 1) на вход подаем одну строчку из таблицы csv
-    // 2) дальше идут преобразования через 2 слоя нейронов
-    // 3) на выходе после softmax получаем наибольшую вероятность в каком-то нейроне -> картинка распознана
-    // для тренировочной выборки мы сравниваем выход с уже известным классом: если не верно -> меняем веса автоматически
-    // для валидационной сами смотрим вручную на форме, правильно ли распознала
-    // на каждой эпохе считаем значения 4 метрик, заносим в массив -> в конце по массиву строим график для каждой метрики
 
     using System;
     using System.Windows.Forms;
@@ -20,20 +13,20 @@ namespace lab2
         private NeuralNetwork network;
         private Bitmap drawingBitmap;
         private bool isDrawing = false;
-        private int brushSize = 5; // Начальный размер кисти
+        char[] classToLetter = { 'А', 'Б', 'Д', 'И', 'М', 'Л', 'П', 'Р', 'С', 'У' };
 
         public Form1()
         {
             InitializeComponent();
-            network = new NeuralNetwork(learningRate: 0.01, sizes: new int[] { 1024, 64, 64, 10 });
+            network = new NeuralNetwork(learningRate: 0.01, sizes: new int[] { 1024, 256, 64, 10 });
             network.LoadWeights("weights.txt");
-            drawingBitmap = new Bitmap(196, 196); // Инициализация Bitmap
+            drawingBitmap = new Bitmap(32, 32); // Инициализация Bitmap
             pictureBox1.Image = drawingBitmap; // Установка на pictureBox
         }
 
         private int[,] getCSVdata()
         {
-            string filePath = "C:/Users/higheroffpropane/Desktop/annotations_bycolumns.csv"; // Укажите путь к вашему CSV-файлу
+            string filePath = "C:/Users/higheroffpropane/Desktop/new_annotations.csv"; // Укажите путь к вашему CSV-файлу
             int numRows = 1000; // Количество строк (изображений)
             int numColumns = 1026; // id + класс + 1024 пикселя
 
@@ -74,8 +67,8 @@ namespace lab2
         private void buttonLearn_Click(object sender, EventArgs e)
         {
             int epochs = int.Parse(textBoxEpochs.Text);
-            int delta = int.Parse(textBoxDelta.Text);
-            network = new NeuralNetwork(learningRate: delta, sizes: new int[] { 1024, 64, 64, 10 });
+            double delta = double.Parse(textBoxDelta.Text);
+            network = new NeuralNetwork(learningRate: delta, sizes: new int[] { 1024, 256, 64, 10 });
             int[,] data = getCSVdata();
             int[,] trainData = new int[800, data.GetLength(1)];
             int[,] validationData = new int[200, data.GetLength(1)];
@@ -138,24 +131,50 @@ namespace lab2
 
             // Передаем массив в нейронную сеть для классификации
             int predictedClass = network.Predict(inputArray);
-            textBox1.Text = predictedClass.ToString();
+            textBox1.Text = classToLetter[predictedClass - 1].ToString();
         }
 
 
+        private void DrawOnBitmap(MouseEventArgs e)
+        {
+            // Получаем масштабирующий коэффициент
+            float scaleX = (float)pictureBox1.Width / drawingBitmap.Width;
+            float scaleY = (float)pictureBox1.Height / drawingBitmap.Height;
+
+            // Вычисляем новые координаты для рисования на Bitmap
+            int drawX = (int)(e.X / scaleX);
+            int drawY = (int)(e.Y / scaleY);
+
+            // Рисуем на исходном Bitmap
+            using (Graphics g = Graphics.FromImage(drawingBitmap))
+            {
+                g.FillRectangle(Brushes.Black, drawX, drawY, 1, 1); // Рисуем пиксель
+            }
+
+            // Перерисовываем PictureBox, чтобы обновить отображение
+            pictureBox1.Invalidate();
+        }
+
+        private void pictureBox_Paint(object sender, PaintEventArgs e)
+        {
+            // Рисуем растянутое изображение
+            e.Graphics.DrawImage(drawingBitmap, 0, 0, pictureBox1.Width, pictureBox1.Height);
+        }
+
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            isDrawing = true;
+            if (e.Button == MouseButtons.Left)
+            {
+                isDrawing = true;
+                DrawOnBitmap(e);
+            }
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
             if (isDrawing)
             {
-                using (Graphics g = Graphics.FromImage(drawingBitmap))
-                {
-                    g.FillEllipse(Brushes.Black, e.X, e.Y, 5, 5); // Рисуем точку
-                }
-                pictureBox1.Invalidate(); // Перерисовываем pictureBox
+                DrawOnBitmap(e);
             }
         }
 
@@ -166,7 +185,7 @@ namespace lab2
 
         private void buttonClear_Click(object sender, EventArgs e)
         {
-            drawingBitmap = new Bitmap(196, 196); // Инициализация Bitmap
+            drawingBitmap = new Bitmap(32, 32); // Инициализация Bitmap
             using (Graphics g = Graphics.FromImage(drawingBitmap))
             {
                 g.Clear(Color.White); // Очистка белым цветом
@@ -177,7 +196,8 @@ namespace lab2
         private void buttonPunish_Click(object sender, EventArgs e)
         {
             // Проверяем, правильно ли распознана картинка
-            int predictedClass = int.Parse(textBox1.Text);
+            char predictedClassToLetter = char.Parse(textBox1.Text);
+            int predictedClass = Array.IndexOf(classToLetter, predictedClassToLetter) + 1;
 
             // Открываем диалог для ввода правильного класса
             string input = Microsoft.VisualBasic.Interaction.InputBox(
@@ -218,35 +238,17 @@ namespace lab2
 
         private void PunishNetwork(int predictedClass, int correctClass, double[] inputArray)
         {
-            // Определяем коэффициент для изменения выходов
-            double punishmentFactor = 0.1; // Настройте этот коэффициент по мере необходимости
-
-            // Создаем массив выходов для целевой метки
-            double[] output = new double[10]; // Предположим, что у вас 10 классов
-            output[correctClass - 1] = 1.0; // Устанавливаем правильный выход
-
-            // Понижаем значение для неправильно предсказанного класса
-            output[predictedClass] -= punishmentFactor; // Уменьшаем неправильно предсказанный класс
-            for (int i = 0; i < output.Length; i++)
-            {
-                // Убеждаемся, что выходы не отрицательные
-                if (output[i] < 0) output[i] = 0;
-            }
-
-            // Теперь формируем данные в формате, который принимает Train
-            // Создаем массив для input и output в нужном формате
+            // Создаем массив для input и output в нужном формате, не преобразуя входные данные к int
             int[,] data = new int[1, 1026]; // 1024 для входов и 2 для класса
             for (int k = 0; k < 1024; k++)
             {
-                data[0, k + 2] = (int)inputArray[k]; // Входные данные (приводим к int)
+                data[0, k + 2] = (inputArray[k] == 1.0) ? 1 : 0; // Входные данные
             }
             data[0, 1] = correctClass; // Правильный класс
 
-            // Запускаем обучение нейросети с обновленными выходами
-            network.Train(1, data); // Обучаем на одном примере
+            // Запускаем обучение на одном примере, чтобы "наказать" сеть
+            network.Train(1, data);
         }
-
-
 
 
         private void checkedListBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -278,6 +280,7 @@ namespace lab2
                 }
             }
         }
+
     }
 
 

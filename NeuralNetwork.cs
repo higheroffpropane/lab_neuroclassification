@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace lab2
 {
-    using System;
-
     public class NeuralNetwork
     {
         private double learningRate;
@@ -25,7 +24,7 @@ namespace lab2
 
                 for (int j = 0; j < sizes[i]; j++)
                 {
-                    layers[i].Biases[j] = new Random().NextDouble() * 2.0 - 1.0;
+                    layers[i].Biases[j] = 0;
                     for (int k = 0; k < nextSize; k++)
                     {
                         layers[i].Weights[j][k] = new Random().NextDouble() * 2.0 - 1.0;
@@ -34,36 +33,16 @@ namespace lab2
             }
         }
 
-        // Sigmoid активационная функция
-        private static double Sigmoid(double x)
-        {
-            return 1.0 / (1.0 + Math.Exp(-x));
-        }
+        private static double Sigmoid(double x) => 1.0 / (1.0 + Math.Exp(-x));
 
-        // Производная сигмоиды
-        private static double DSigmoid(double y)
-        {
-            return y * (1.0 - y);
-        }
-        
-        // Softmax
+        private static double DSigmoid(double y) => y * (1.0 - y);
+
         private static double[] Softmax(double[] outputs)
         {
             double max = outputs.Max();
-            double sum = 0;
-
-            for (int i = 0; i < outputs.Length; i++)
-            {
-                outputs[i] = Math.Exp(outputs[i] - max); // Для числовой стабильности
-                sum += outputs[i];
-            }
-
-            for (int i = 0; i < outputs.Length; i++)
-            {
-                outputs[i] /= sum;
-            }
-
-            return outputs;
+            double[] exps = outputs.Select(o => Math.Exp(o - max)).ToArray();
+            double sum = exps.Sum();
+            return exps.Select(e => e / sum).ToArray();
         }
 
         public double[] FeedForward(double[] inputs)
@@ -85,28 +64,22 @@ namespace lab2
                     }
 
                     l1.Neurons[j] += l1.Biases[j];
-
-                    // Используем сигмоид на всех слоях, кроме последнего
                     l1.Neurons[j] = Sigmoid(l1.Neurons[j]);
                 }
             }
 
-            // Применяем softmax на выходном слое для получения вероятностей классов
             return Softmax(layers[^1].Neurons);
         }
 
         public void Backpropagation(double[] targets)
         {
-            // Массив для хранения ошибок выходного слоя
             double[] errors = new double[layers[^1].Size];
 
-            // Вычисление ошибок для выходного слоя
             for (int i = 0; i < layers[^1].Size; i++)
             {
                 errors[i] = targets[i] - layers[^1].Neurons[i];
             }
 
-            // Обратное распространение ошибки по слоям
             for (int k = layers.Length - 2; k >= 0; k--)
             {
                 Layer l = layers[k];
@@ -115,14 +88,11 @@ namespace lab2
                 double[] errorsNext = new double[l.Size];
                 double[] gradients = new double[l1.Size];
 
-                // Вычисление градиентов для текущего слоя
                 for (int i = 0; i < l1.Size; i++)
                 {
-                    gradients[i] = errors[i] * DSigmoid(l1.Neurons[i]);
-                    gradients[i] *= learningRate; // Умножаем на скорость обучения
+                    gradients[i] = errors[i] * DSigmoid(l1.Neurons[i]) * learningRate;
                 }
 
-                // Инициализация массива делт
                 double[][] deltas = new double[l1.Size][];
                 for (int i = 0; i < l1.Size; i++)
                 {
@@ -133,34 +103,25 @@ namespace lab2
                     }
                 }
 
-                // Вычисление ошибок для предыдущего слоя
                 for (int i = 0; i < l.Size; i++)
                 {
                     errorsNext[i] = 0;
                     for (int j = 0; j < l1.Size; j++)
                     {
-                        errorsNext[i] += l.Weights[i][j] * errors[j]; // Умножаем веса на ошибки
+                        errorsNext[i] += l.Weights[i][j] * errors[j];
                     }
                 }
 
-                // Копируем ошибки для следующей итерации
-                errors = new double[l.Size];
-                Array.Copy(errorsNext, errors, l.Size);
+                errors = errorsNext;
 
-                // Обновление весов
-                double[][] weightsNew = new double[l.Size][];
                 for (int i = 0; i < l.Size; i++)
                 {
-                    weightsNew[i] = new double[l1.Size];
                     for (int j = 0; j < l1.Size; j++)
                     {
-                        // Обновляем веса
-                        weightsNew[i][j] = l.Weights[i][j] + deltas[j][i];
+                        l.Weights[i][j] -= learningRate * deltas[j][i];
                     }
                 }
-                l.Weights = weightsNew;
 
-                // Обновление смещений
                 for (int i = 0; i < l1.Size; i++)
                 {
                     l1.Biases[i] += gradients[i];
@@ -175,21 +136,23 @@ namespace lab2
             int validationSize = (int)(samples * validationSplit);
             int trainSize = samples - validationSize;
 
-            // Разделяем данные на обучающую и валидационную выборки
             int[,] trainData = new int[trainSize, data.GetLength(1)];
             int[,] validationData = new int[validationSize, data.GetLength(1)];
-            Array.Copy(data, 0, trainData, 0, trainSize * data.GetLength(1));
-            Array.Copy(data, trainSize * data.GetLength(1), validationData, 0, validationSize * data.GetLength(1));
 
-            // Открываем файл для записи метрик
+            for (int i = 0; i < trainSize; i++)
+                for (int j = 0; j < data.GetLength(1); j++)
+                    trainData[i, j] = data[i, j];
+
+            for (int i = 0; i < validationSize; i++)
+                for (int j = 0; j < data.GetLength(1); j++)
+                    validationData[i, j] = data[trainSize + i, j];
+
             using (StreamWriter writer = new StreamWriter("metrics.txt"))
             {
                 for (int epoch = 1; epoch <= epochs; epoch++)
                 {
-                    int correctCount = 0;
-                    double totalError = 0;
+                    double totalLoss = 0;
 
-                    // Обучение на обучающей выборке
                     for (int imgIndex = 0; imgIndex < trainSize; imgIndex++)
                     {
                         double[] inputs = new double[1024];
@@ -204,33 +167,23 @@ namespace lab2
 
                         double[] outputs = FeedForward(inputs);
 
-                        int predictedClass = 0;
-                        double maxOutput = outputs[0];
-                        for (int k = 1; k < outputs.Length; k++)
-                        {
-                            if (outputs[k] > maxOutput)
-                            {
-                                maxOutput = outputs[k];
-                                predictedClass = k;
-                            }
-                        }
-
-                        if (predictedClass == actualClass - 1)
-                        {
-                            correctCount++;
-                        }
-
+                        double exampleLoss = 0;
                         for (int k = 0; k < 10; k++)
                         {
-                            double error = targets[k] - outputs[k];
-                            totalError += error * error;
+                            double output = Math.Max(outputs[k], 1e-15);
+                            exampleLoss -= targets[k] * Math.Log(output);
                         }
 
+                        totalLoss += exampleLoss;
                         Backpropagation(targets);
                     }
 
-                    // Проверка на валидационной выборке
-                    double valAccuracy = 0, valPrecision = 0, valRecall = 0, valLoss = 0;
+                    double averageLoss = totalLoss / trainSize;
+
+                    double valAccuracy = 0, valPrecision, valRecall;
+                    int[] trueClasses = new int[validationSize];
+                    int[] predictedClasses = new int[validationSize];
+
                     for (int imgIndex = 0; imgIndex < validationSize; imgIndex++)
                     {
                         double[] inputs = new double[1024];
@@ -239,71 +192,86 @@ namespace lab2
                             inputs[k] = validationData[imgIndex, k + 2];
                         }
 
-                        double[] targets = new double[10];
                         int actualClass = validationData[imgIndex, 1];
-                        targets[actualClass - 1] = 1;
+                        trueClasses[imgIndex] = actualClass - 1;
 
                         double[] outputs = FeedForward(inputs);
-
-                        // Метрика Accuracy
                         int predictedClass = Array.IndexOf(outputs, outputs.Max());
-                        if (predictedClass == actualClass - 1)
+                        predictedClasses[imgIndex] = predictedClass;
+
+                        if (predictedClass == trueClasses[imgIndex])
                         {
                             valAccuracy++;
                         }
-
-                        // Метрика Loss
-                        for (int k = 0; k < 10; k++)
-                        {
-                            double error = targets[k] - outputs[k];
-                            valLoss += error * error;
-                        }
-
-                        // Метрики Precision и Recall (рассчитываются только для бинарных меток)
-                        valPrecision += CalculatePrecision(targets, outputs);
-                        valRecall += CalculateRecall(targets, outputs);
                     }
 
-                    // Нормализация метрик
                     valAccuracy /= validationSize;
-                    valLoss /= validationSize;
-                    valPrecision /= validationSize;
-                    valRecall /= validationSize;
 
-                    // Запись метрик в файл
-                    writer.WriteLine($"{valAccuracy} {valPrecision} {valRecall} {valLoss}");
+                    valPrecision = CalculatePrecision(trueClasses, predictedClasses, 10);
+                    valRecall = CalculateRecall(trueClasses, predictedClasses, 10);
 
-                    Console.WriteLine($"Epoch {epoch}: Accuracy={valAccuracy}, Precision={valPrecision}, Recall={valRecall}, Loss={valLoss}");
+                    writer.WriteLine($"Epoch {epoch}: Loss={Math.Round(averageLoss, 4)}, Accuracy={Math.Round(valAccuracy, 4)}, Precision={Math.Round(valPrecision, 4)}, Recall={Math.Round(valRecall, 4)}");
+                    Console.WriteLine($"Epoch {epoch}: Loss={averageLoss}, Accuracy={valAccuracy}, Precision={valPrecision}, Recall={valRecall}");
                 }
             }
+
+            SaveWeights("weights.txt");
         }
 
-        // Функции для вычисления Precision и Recall
-        private double CalculatePrecision(double[] targets, double[] outputs)
+        private double CalculatePrecision(int[] trueClasses, int[] predictedClasses, int numClasses)
         {
-            int truePositives = 0, predictedPositives = 0;
+            double precisionSum = 0;
 
-            for (int i = 0; i < targets.Length; i++)
+            for (int c = 0; c < numClasses; c++)
             {
-                if (outputs[i] >= 0.5) predictedPositives++;
-                if (targets[i] == 1 && outputs[i] >= 0.5) truePositives++;
+                int tp = 0, fp = 0;
+
+                for (int i = 0; i < trueClasses.Length; i++)
+                {
+                    if (predictedClasses[i] == c)
+                    {
+                        if (trueClasses[i] == c) tp++;  // True Positive
+                        else fp++;  // False Positive
+                    }
+                }
+
+                // Precision для текущего класса
+                if ((tp + fp) > 0)
+                    precisionSum += (double)tp / (tp + fp);
             }
 
-            return predictedPositives == 0 ? 0 : (double)truePositives / predictedPositives;
+            // Усредняем Precision по всем классам
+            return precisionSum / numClasses;
         }
 
-        private double CalculateRecall(double[] targets, double[] outputs)
+        private double CalculateRecall(int[] trueClasses, int[] predictedClasses, int numClasses)
         {
-            int truePositives = 0, actualPositives = 0;
+            double recallSum = 0;
 
-            for (int i = 0; i < targets.Length; i++)
+            for (int c = 0; c < numClasses; c++)
             {
-                if (targets[i] == 1) actualPositives++;
-                if (targets[i] == 1 && outputs[i] >= 0.5) truePositives++;
+                int tp = 0, fn = 0;
+
+                for (int i = 0; i < trueClasses.Length; i++)
+                {
+                    if (trueClasses[i] == c)
+                    {
+                        if (predictedClasses[i] == c) tp++;  // True Positive
+                        else fn++;  // False Negative
+                    }
+                }
+
+                // Recall для текущего класса
+                if ((tp + fn) > 0)
+                    recallSum += (double)tp / (tp + fn);
             }
 
-            return actualPositives == 0 ? 0 : (double)truePositives / actualPositives;
+            // Усредняем Recall по всем классам
+            return recallSum / numClasses;
         }
+
+
+
 
         public int Predict(double[] inputs)
         {
@@ -341,7 +309,6 @@ namespace lab2
                 }
             }
         }
-
 
         public void LoadWeights(string filePath)
         {

@@ -42,6 +42,8 @@
             label2 = new Label();
             checkedListBox1 = new CheckedListBox();
             buttonChoose = new Button();
+            label3 = new Label();
+            label4 = new Label();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trackBar1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -90,6 +92,7 @@
             pictureBox1.Location = new Point(56, 85);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(196, 196);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 4;
             pictureBox1.TabStop = false;
             pictureBox1.MouseDown += pictureBox1_MouseDown;
@@ -102,6 +105,7 @@
             textBoxEpochs.Name = "textBoxEpochs";
             textBoxEpochs.Size = new Size(65, 23);
             textBoxEpochs.TabIndex = 5;
+            textBoxEpochs.Text = "10";
             // 
             // textBoxDelta
             // 
@@ -109,6 +113,7 @@
             textBoxDelta.Name = "textBoxDelta";
             textBoxDelta.Size = new Size(65, 23);
             textBoxDelta.TabIndex = 6;
+            textBoxDelta.Text = "0,01";
             // 
             // buttonLearn
             // 
@@ -173,11 +178,31 @@
             buttonChoose.UseVisualStyleBackColor = true;
             buttonChoose.Click += buttonChoose_Click;
             // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(309, 37);
+            label3.Name = "label3";
+            label3.Size = new Size(41, 15);
+            label3.TabIndex = 14;
+            label3.Text = "Эпохи";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(375, 37);
+            label4.Name = "label4";
+            label4.Size = new Size(59, 15);
+            label4.TabIndex = 15;
+            label4.Text = "Скорость";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(label4);
+            Controls.Add(label3);
             Controls.Add(buttonChoose);
             Controls.Add(checkedListBox1);
             Controls.Add(label2);
@@ -218,5 +243,7 @@
         private Label label2;
         private CheckedListBox checkedListBox1;
         private Button buttonChoose;
+        private Label label3;
+        private Label label4;
     }
 }

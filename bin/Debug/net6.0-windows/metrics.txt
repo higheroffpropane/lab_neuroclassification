@@ -1,1 +1,10 @@
-не число не число не число не число
+Epoch 1: Loss=2,3265, Accuracy=0,125, Precision=0,0282, Recall=0,1302
+Epoch 2: Loss=2,3393, Accuracy=0,105, Precision=0,0265, Recall=0,1111
+Epoch 3: Loss=2,3509, Accuracy=0,11, Precision=0,061, Recall=0,1177
+Epoch 4: Loss=2,3493, Accuracy=0,115, Precision=0,1786, Recall=0,1226
+Epoch 5: Loss=2,3455, Accuracy=0,08, Precision=0,1005, Recall=0,0847
+Epoch 6: Loss=2,3426, Accuracy=0,075, Precision=0,0857, Recall=0,08
+Epoch 7: Loss=2,3404, Accuracy=0,065, Precision=0,0609, Recall=0,0704
+Epoch 8: Loss=2,3387, Accuracy=0,075, Precision=0,0739, Recall=0,0812
+Epoch 9: Loss=2,3376, Accuracy=0,07, Precision=0,0902, Recall=0,0751
+Epoch 10: Loss=2,3367, Accuracy=0,075, Precision=0,0945, Recall=0,0797
